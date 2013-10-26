@@ -1,0 +1,208 @@
+<html>
+<head>
+    <title>Simple gradient example</title>
+    <script type="text/javascript">
+        var can, ctx, 
+            canWidth = 400, 
+            canHeight = 700, 
+            pegRadius = 25, 
+            markerRadius = 7,
+            colorCodes = [
+                "#000000", 
+                "#FFFFFF", 
+                "#FF0000", 
+                "#0000FF", 
+                "#008800", 
+                "#FFFF00"], 
+            c, C, 
+            n, N = 0, 
+            r, R = 0,
+            guessCode = [],
+            guessCodeCount = {
+                "#000000": 0,
+                "#FFFFFF": 0,
+                "#FF0000": 0,
+                "#0000FF": 0,
+                "#008800": 0,
+                "#FFFF00": 0},
+            guessCodeCountMarker = {
+                "#000000": 0,
+                "#FFFFFF": 0,
+                "#FF0000": 0,
+                "#0000FF": 0,
+                "#008800": 0,
+                "#FFFF00": 0},
+            masterCodeCount = {
+                "#000000": 0,
+                "#FFFFFF": 0,
+                "#FF0000": 0,
+                "#0000FF": 0,
+                "#008800": 0,
+                "#FFFF00": 0},
+            masterCode = [
+                "#000000",
+                "#000000",
+                "#FFFFFF",
+                "#FFFFFF"],
+            totalDiff,
+            varDiff = 0;
+ 
+        function init() {
+            can = document.getElementById("can");
+            ctx = can.getContext("2d");
+            col = document.getElementById("chooseColor");
+            drawBack();
+            drawHoles();
+            countMaster();
+            //drawChoice();
+        }
+
+        function drawBack() {
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canWidth, canHeight);
+        }
+        function drawHoles() {
+            // Draw empty peg holes
+            for (var i=50; i<=275; i+=75) {
+                for (var j=50; j<=575; j+=75) {
+                    ctx.beginPath();
+                    ctx.arc(i, j, pegRadius, 0, Math.PI*2, true);
+                    ctx.fillStyle = "white";
+                    ctx.fill();
+                }
+            }
+            // Draw empty marker holes
+            for (var i=325; i<=344; i+=19) {
+                for (var j = 40; j<= 59; j+=19) {
+                    for (var k = 0; k<=575; k+=75) {
+                        ctx.beginPath();
+                        ctx.arc(i, j+k, markerRadius, 0, Math.PI*2, true);
+                        ctx.fillStyle = "white";
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+        function countGuess() {
+            for (var color in guessCodeCountMarker) {
+                guessCodeCount[color] = guessCodeCountMarker[color]
+            }
+            num = 0;
+            for (var count in guessCodeCount) {
+                num = 0;
+                for (var color in guessCode) {
+                    if (guessCode[color] === count) {
+                        num += 1;
+                        guessCodeCount[count] = num;
+                    }
+                }
+            }
+        }
+        function countMaster() {
+            num = 0;
+            for (var count in masterCodeCount) {
+                num = 0;
+                for (var color in masterCode) {
+                    if (masterCode[color] === count) {
+                        num += 1;
+                        masterCodeCount[count] = num;
+                    }
+                }
+            }
+        }
+        function diff() {
+            var diff = {};
+            totalDiff = 0;
+            for (var color in guessCodeCount) {
+                if (guessCodeCount[color] < masterCodeCount[color] &&
+                    masterCodeCount[color] !== 0) {                
+                diff[color] = guessCodeCount[color] - masterCodeCount[color];
+                console.log("diff[color] (" + diff[color] + ") = guessCodeCount[color] (" + guessCodeCount[color] + ") - masterCodeCount[color] (" + masterCodeCount[color] + ")")
+                }
+            }
+            for (var color in diff) {
+                totalDiff += diff[color];
+            }
+            console.log(totalDiff)
+        }
+        function feedback(n) {
+            if (n === 3) {
+                countGuess();
+                console.log(guessCodeCount);
+                console.log(masterCodeCount);
+                diff();
+                C = 0;
+                // Checks to see if choices match by place and color
+                for (var i=0;i<4;i++) {
+                    if (guessCode[i] === masterCode[i]) {
+                        ctx.beginPath();
+                        ctx.fillStyle = "#FF0000";
+                        if (C < 2) {
+                            ctx.arc(325+C*19,40+r*75,markerRadius,0,Math.PI*2,true);
+                            ctx.fill();
+                        } else {
+                            ctx.arc(325+(C-2)*19,59+r*75,markerRadius,0, Math.PI*2,true);
+                            ctx.fill();
+                        }
+                        C += 1;
+                    // Checks to see if choices match by color
+                    } 
+                }
+                for (var i=0;i<4;i++) {
+                    if (guessCode[i] !== masterCode[i]) {
+                        if (totalDiff < 0) {
+                            totalDiff += 1;
+                        } else if (guessCode[i] === masterCode[0] ||
+                            guessCode[i] === masterCode[1] ||
+                            guessCode[i] === masterCode[2] ||
+                            guessCode[i] === masterCode[3]) {
+                            ctx.beginPath();
+                            ctx.fillStyle = "#0000FF";
+                            if (C < 2) {
+                                ctx.arc(325+C*19,40+r*75,markerRadius,0,Math.PI*2,true);
+                                ctx.fill();
+                            } else {
+                                ctx.arc(325+(C-2)*19,59+r*75,markerRadius,0, Math.PI*2,true);
+                                ctx.fill();
+                            }
+                            C += 1;
+                        }
+                    }
+                }
+            }
+        }
+        function drawChoice() {
+            ctx.beginPath();
+            ctx.arc(50+n*75, 50+r*75, 25, 0, Math.PI*2, true);
+            ctx.fill();
+            if (n < 3) {
+                N += 1;
+            } else {
+                N = 0;
+                R += 1;
+            }
+            feedback(n);
+        }
+        function colorChoice(color) {
+            r = R;
+            n = N;
+            ctx.fillStyle = color;
+            guessCode[n] = color;
+            drawChoice();
+        }
+    </script>
+</head>
+<body onload="init()" style="background-color:#e0e0e0">
+    <input id="chooseColor" type="button" value="black" onclick="colorChoice('#000000')">
+    <input id="chooseColor" type="button" value="white" onclick="colorChoice('#FFFFFF')">
+    <input id="chooseColor" type="button" value="red" onclick="colorChoice('#FF0000')">
+    <input id="chooseColor" type="button" value="blue" onclick="colorChoice('#0000ff')">
+    <input id="chooseColor" type="button" value="green" onclick="colorChoice('#008800')">
+    <input id="chooseColor" type="button" value="yellow" onclick="colorChoice('#FFFF00')">
+    <br />
+    <canvas id="can" height="700" width="400">
+    </canvas>
+    
+    
+</body>
+</html>
